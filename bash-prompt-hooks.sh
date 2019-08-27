@@ -1,15 +1,21 @@
-# bash-preexec.sh -- Bash support for ZSH-like 'preexec' and 'precmd' functions.
-# https://github.com/rcaloras/bash-preexec
+# bash-prompt-hooks.sh -- `preexec` and `precmd` hooks for the Bash prompt
+# https://github.com/spl/bash-prompt-hooks
 #
 #
 # 'preexec' functions are executed before each interactive command is
 # executed, with the interactive command as its argument. The 'precmd'
 # function is executed before each prompt is displayed.
 #
-# Author: Ryan Caloras (ryan@bashhub.com)
-# Forked from Original Author: Glyph Lefkowitz
+# Author: Sean Leather
+#   https://github.com/spl/bash-prompt-hooks
 #
-# V0.3.7
+# Forked from:
+#   https://github.com/rcaloras/bash-preexec (Ryan Caloras)
+#
+# Original:
+#   https://www.twistedmatrix.com/users/glyph/preexec.bash.txt (Glyph Lefkowitz)
+#
+# Version: UNRELEASED
 #
 
 # General Usage:
@@ -30,7 +36,8 @@
 #
 #  Note: This module requires two Bash features which you must not otherwise be
 #  using: the "DEBUG" trap, and the "PROMPT_COMMAND" variable. If you override
-#  either of these after bash-preexec has been installed it will most likely break.
+#  either of these after bash-prompt-hooks has been installed it will most
+#  likely break.
 
 # Avoid duplicate inclusion
 if [[ "${__bp_imported:-}" == "defined" ]]; then
@@ -56,7 +63,7 @@ __bp_require_not_readonly() {
   local var
   for var; do
     if ! ( unset "$var" 2> /dev/null ); then
-      echo "bash-preexec requires write access to ${var}" >&2
+      echo "bash-prompt-hooks requires write access to ${var}" >&2
       return 1
     fi
   done
@@ -292,7 +299,7 @@ __bp_install() {
 }
 
 # Sets our trap and __bp_install as part of our PROMPT_COMMAND to install
-# after our session has started. This allows bash-preexec to be included
+# after our session has started. This allows bash-prompt-hooks to be included
 # at any point in our bash profile. Ideally we could set our trap inside
 # __bp_install, but if a trap already exists it'll only set locally to
 # the function.
@@ -303,7 +310,7 @@ __bp_install_after_session_init() {
         return 1;
     fi
 
-    # bash-preexec needs to modify these variables in order to work correctly
+    # bash-prompt-hooks needs to modify these variables in order to work correctly
     # if it can't, just stop the installation
     __bp_require_not_readonly PROMPT_COMMAND HISTCONTROL HISTTIMEFORMAT || return
 

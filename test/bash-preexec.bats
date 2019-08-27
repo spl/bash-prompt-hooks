@@ -5,7 +5,7 @@ setup() {
   history -s fake command  # preexec requires there be some history
   set -o nounset           # in case the user has this set
   __bp_delay_install="true"
-  source "${BATS_TEST_DIRNAME}/../bash-preexec.sh"
+  source "${BATS_TEST_DIRNAME}/../bash-prompt-hooks.sh"
 }
 
 bp_install() {
