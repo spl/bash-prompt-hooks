@@ -23,16 +23,7 @@
 #  1. Source this file at the end of your bash profile so as not to interfere
 #     with anything else that's using PROMPT_COMMAND.
 #
-#  2. Add any precmd or preexec functions by appending them to their arrays:
-#       e.g.
-#       precmd_functions+=(my_precmd_function)
-#       precmd_functions+=(some_other_precmd_function)
-#
-#       preexec_functions+=(my_preexec_function)
-#
-#  3. Consider changing anything using the DEBUG trap or PROMPT_COMMAND
-#     to use preexec and precmd instead. Preexisting usages will be
-#     preserved, but doing so manually may be less surprising.
+#  2. Add any precmd or preexec function.
 #
 #  Note: This module requires two Bash features which you must not otherwise be
 #  using: the "DEBUG" trap, and the "PROMPT_COMMAND" variable. If you override
@@ -46,7 +37,7 @@ fi
 __bp_imported="defined"
 
 # Should be available to each precmd and preexec
-# functions, should they want it. $? and $_ are available as $? and $_, but
+# function, should they want it. $? and $_ are available as $? and $_, but
 # $PIPESTATUS is available only in a copy, $BP_PIPESTATUS.
 # TODO: Figure out how to restore PIPESTATUS before each precmd or preexec
 # function.
@@ -56,18 +47,6 @@ __bp_last_argument_prev_command="$_"
 
 __bp_inside_precmd=0
 __bp_inside_preexec=0
-
-# Fails if any of the given variables are readonly
-# Reference https://stackoverflow.com/a/4441178
-__bp_require_not_readonly() {
-  local var
-  for var; do
-    if ! ( unset "$var" 2> /dev/null ); then
-      echo "bash-prompt-hooks requires write access to ${var}" >&2
-      return 1
-    fi
-  done
-}
 
 # This variable describes whether we are currently in "interactive mode";
 # i.e. whether this shell has just executed a prompt and is waiting for user
@@ -92,7 +71,7 @@ __bp_interactive_mode() {
 
 
 # This function is installed as part of the PROMPT_COMMAND.
-# It will invoke any functions defined in the precmd_functions array.
+# It will invoke the precmd function.
 __bp_precmd_invoke_cmd() {
     # Save the returned value from our last command, and from each process in
     # its pipeline. Note: this MUST be the first thing done in this function.
@@ -106,22 +85,15 @@ __bp_precmd_invoke_cmd() {
     fi
     local __bp_inside_precmd=1
 
-    # Invoke every function defined in our function array.
-    local precmd_function
-    for precmd_function in "${precmd_functions[@]}"; do
-
-        # Only execute this function if it actually exists.
-        # Test existence of functions with: declare -[Ff]
-        if type -t "$precmd_function" 1>/dev/null; then
-            __bp_set_ret_value "$__bp_last_ret_value" "$__bp_last_argument_prev_command"
-            # Quote our function invocation to prevent issues with IFS
-            "$precmd_function"
-        fi
-    done
+    # Only execute the function if it exists.
+    if type -t precmd 1> /dev/null; then
+        __bp_set_ret_value "$__bp_last_ret_value" "$__bp_last_argument_prev_command"
+        precmd
+    fi
 }
 
 # Sets a return value in $?. We may want to get access to the $? variable in our
-# precmd functions. This is available for instance in zsh. We can simulate it in bash
+# precmd function. This is available for instance in zsh. We can simulate it in bash
 # by setting the value here.
 __bp_set_ret_value() {
     return ${1:-}
@@ -130,7 +102,7 @@ __bp_set_ret_value() {
 __bp_in_prompt_command() {
 
     local prompt_command_array
-    IFS=';' read -ra prompt_command_array <<< "$PROMPT_COMMAND"
+    IFS=';' read -ra prompt_command_array <<< "${PROMPT_COMMAND:-}"
 
     local trimmed_arg
     trimmed_arg=$(__bp_trim_whitespace "${1:-}")
@@ -198,26 +170,16 @@ __bp_preexec_invoke_exec() {
 
     # If none of the previous checks have returned out of this function, then
     # the command is in fact interactive and we should invoke the user's
-    # preexec functions.
+    # preexec function.
 
-    # Invoke every function defined in our function array.
-    local preexec_function
-    local preexec_function_ret_value
     local preexec_ret_value=0
-    for preexec_function in "${preexec_functions[@]:-}"; do
 
-        # Only execute each function if it actually exists.
-        # Test existence of function with: declare -[fF]
-        if type -t "$preexec_function" 1>/dev/null; then
-            __bp_set_ret_value ${__bp_last_ret_value:-}
-            # Quote our function invocation to prevent issues with IFS
-            "$preexec_function"
-            preexec_function_ret_value="$?"
-            if [[ "$preexec_function_ret_value" != 0 ]]; then
-                preexec_ret_value="$preexec_function_ret_value"
-            fi
-        fi
-    done
+    # Only execute the function if it exists.
+    if type -t preexec 1> /dev/null; then
+        __bp_set_ret_value ${__bp_last_ret_value:-}
+        preexec
+        preexec_ret_value="$?"
+    fi
 
     # Restore the last argument of the last executed command, and set the return
     # value of the DEBUG trap to be the return code of the last preexec function
@@ -234,26 +196,12 @@ __bp_install() {
         return 1;
     fi
 
+    # Install the DEBUG trap and pass $_ to preserve it.
     trap '__bp_preexec_invoke_exec "$_"' DEBUG
-
-    # Preserve any prior DEBUG trap as a preexec function
-    local prior_trap=$(sed "s/[^']*'\(.*\)'[^']*/\1/" <<<"${__bp_trap_string:-}")
-    unset __bp_trap_string
-    if [[ -n "$prior_trap" ]]; then
-        eval '__bp_original_debug_trap() {
-          '"$prior_trap"'
-        }'
-        preexec_functions+=(__bp_original_debug_trap)
-    fi
 
     # Install our hooks in PROMPT_COMMAND to allow our trap to know when we've
     # actually entered something.
     PROMPT_COMMAND="__bp_precmd_invoke_cmd; __bp_interactive_mode"
-
-    # Add two functions to our arrays for convenience
-    # of definition.
-    precmd_functions+=(precmd)
-    preexec_functions+=(preexec)
 
     # Since this function is invoked via PROMPT_COMMAND, re-execute PC now that it's properly set
     eval "$PROMPT_COMMAND"
@@ -271,25 +219,34 @@ __bp_install_after_session_init() {
         return 1;
     fi
 
-    # bash-prompt-hooks needs to modify these variables in order to work correctly
-    # if it can't, just stop the installation
-    __bp_require_not_readonly PROMPT_COMMAND || return
-
-    # If there's an existing PROMPT_COMMAND capture it and convert it into a function
-    # So it is preserved and invoked during precmd.
-    if [[ -n "$PROMPT_COMMAND" ]]; then
-      eval '__bp_original_prompt_command() {
-        '"$PROMPT_COMMAND"'
-      }'
-      precmd_functions+=(__bp_original_prompt_command)
+    # Exit with error if PROMPT_COMMAND is read-only.
+    # Reference: https://stackoverflow.com/a/4441178
+    if ! ( unset PROMPT_COMMAND 2> /dev/null ); then
+        echo "bash-prompt-hooks: Error! PROMPT_COMMAND is read-only." >&2
+        return 1
     fi
+
+    # Warn if PROMPT_COMMAND is not empty.
+    if [[ -n "${PROMPT_COMMAND:-}" ]]; then
+        echo "bash-prompt-hooks: Warning! Overriding PROMPT_COMMAND." >&2
+    fi
+
+    unset PROMPT_COMMAND
+
+    # Warn if a DEBUG trap already exists.
+    if [[ -n "$(trap -p DEBUG)" ]]; then
+        echo "bash-prompt-hooks: Warning! Overriding DEBUG trap." >&2
+    fi
+
+    # Note that we cannot always replace the DEBUG trap in a sourced script:
+    # Reference: https://stackoverflow.com/q/43989793
 
     # Installation is finalized in PROMPT_COMMAND, which allows us to override the DEBUG
     # trap. __bp_install sets PROMPT_COMMAND to its final value, so these are only
     # invoked once.
     # It's necessary to clear any existing DEBUG trap in order to set it from the install function.
     # Using \n as it's the most universal delimiter of bash commands
-    PROMPT_COMMAND=$'\n__bp_trap_string="$(trap -p DEBUG)"\ntrap DEBUG\n__bp_install\n'
+    PROMPT_COMMAND='trap DEBUG; __bp_install'
 }
 
 # Run our install so long as we're not delaying it.
