@@ -246,17 +246,6 @@ __bp_install() {
         preexec_functions+=(__bp_original_debug_trap)
     fi
 
-    # Issue #25. Setting debug trap for subshells causes sessions to exit for
-    # backgrounded subshell commands (e.g. (pwd)& ). Believe this is a bug in Bash.
-    #
-    # Disabling this by default. It can be enabled by setting this variable.
-    if [[ -n "${__bp_enable_subshells:-}" ]]; then
-
-        # Set so debug trap will work be invoked in subshells.
-        set -o functrace > /dev/null 2>&1
-        shopt -s extdebug > /dev/null 2>&1
-    fi;
-
     # Install our hooks in PROMPT_COMMAND to allow our trap to know when we've
     # actually entered something.
     PROMPT_COMMAND="__bp_precmd_invoke_cmd; __bp_interactive_mode"
