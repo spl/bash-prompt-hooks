@@ -12,9 +12,15 @@
   [ -n $(type -t __bp_install) ]
 }
 
-@test "bp should stop installation if HISTTIMEFORMAT is readonly" {
+@test "doesn't change HISTCONTROL" {
+  readonly HISTCONTROL
+  run source "${BATS_TEST_DIRNAME}/../bash-prompt-hooks.sh"
+  [ $status -eq 0 ]
+  [ "$output" == '' ]
+}
+@test "doesn't change HISTTIMEFORMAT" {
   readonly HISTTIMEFORMAT
   run source "${BATS_TEST_DIRNAME}/../bash-prompt-hooks.sh"
-  [ $status -ne 0 ]
-  [[ "$output" =~ "HISTTIMEFORMAT" ]] || return 1
+  [ $status -eq 0 ]
+  [ "$output" == '' ]
 }

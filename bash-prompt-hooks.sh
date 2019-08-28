@@ -69,19 +69,6 @@ __bp_require_not_readonly() {
   done
 }
 
-# Remove ignorespace and or replace ignoreboth from HISTCONTROL
-# so we can accurately invoke preexec with a command from our
-# history even if it starts with a space.
-__bp_adjust_histcontrol() {
-    local histcontrol
-    histcontrol="${HISTCONTROL//ignorespace}"
-    # Replace ignoreboth with ignoredups
-    if [[ "$histcontrol" == *"ignoreboth"* ]]; then
-        histcontrol="ignoredups:${histcontrol//ignoreboth}"
-    fi;
-    export HISTCONTROL="$histcontrol"
-}
-
 # This variable describes whether we are currently in "interactive mode";
 # i.e. whether this shell has just executed a prompt and is waiting for user
 # input.  It documents whether the current command invoked by the trace hook is
@@ -209,17 +196,6 @@ __bp_preexec_invoke_exec() {
         return
     fi
 
-    local this_command
-    this_command=$(
-        export LC_ALL=C
-        HISTTIMEFORMAT= builtin history 1 | sed '1 s/^ *[0-9][0-9]*[* ] //'
-    )
-
-    # Sanity check to make sure we have something to invoke our function with.
-    if [[ -z "$this_command" ]]; then
-        return
-    fi
-
     # If none of the previous checks have returned out of this function, then
     # the command is in fact interactive and we should invoke the user's
     # preexec functions.
@@ -235,7 +211,7 @@ __bp_preexec_invoke_exec() {
         if type -t "$preexec_function" 1>/dev/null; then
             __bp_set_ret_value ${__bp_last_ret_value:-}
             # Quote our function invocation to prevent issues with IFS
-            "$preexec_function" "$this_command"
+            "$preexec_function"
             preexec_function_ret_value="$?"
             if [[ "$preexec_function_ret_value" != 0 ]]; then
                 preexec_ret_value="$preexec_function_ret_value"
@@ -269,10 +245,6 @@ __bp_install() {
         }'
         preexec_functions+=(__bp_original_debug_trap)
     fi
-
-    # Adjust our HISTCONTROL Variable if needed.
-    __bp_adjust_histcontrol
-
 
     # Issue #25. Setting debug trap for subshells causes sessions to exit for
     # backgrounded subshell commands (e.g. (pwd)& ). Believe this is a bug in Bash.
@@ -312,7 +284,7 @@ __bp_install_after_session_init() {
 
     # bash-prompt-hooks needs to modify these variables in order to work correctly
     # if it can't, just stop the installation
-    __bp_require_not_readonly PROMPT_COMMAND HISTCONTROL HISTTIMEFORMAT || return
+    __bp_require_not_readonly PROMPT_COMMAND || return
 
     # If there's an existing PROMPT_COMMAND capture it and convert it into a function
     # So it is preserved and invoked during precmd.

@@ -2,7 +2,6 @@
 
 setup() {
   PROMPT_COMMAND=''        # in case the invoking shell has set this
-  history -s fake command  # preexec requires there be some history
   set -o nounset           # in case the user has this set
   __bp_delay_install="true"
   source "${BATS_TEST_DIRNAME}/../bash-prompt-hooks.sh"
@@ -15,6 +14,10 @@ bp_install() {
 
 test_echo() {
   echo "test echo"
+}
+
+test_preexec_arg() {
+  [ "$1" == '' ]
 }
 
 test_preexec_echo() {
@@ -141,20 +144,17 @@ test_preexec_echo() {
     [ "$output" == "last-arg" ]
 }
 
-@test "preexec should execute a function with the last command in our history" {
+@test "preexec \$1 is unbound" {
     preexec_functions+=(test_preexec_echo)
     __bp_interactive_mode
-    git_command="git commit -a -m 'committing some stuff'"
-    history -s $git_command
-
     run '__bp_preexec_invoke_exec'
-    [ $status -eq 0 ]
-    [ "$output" == "$git_command" ]
+    [ $status -eq 1 ]
+    [[ "$output" == *"unbound variable"* ]] || return 1
 }
 
 @test "preexec should execute multiple functions in the order added to their arrays" {
-    fun_1() { echo "$1 one"; }
-    fun_2() { echo "$1 two"; }
+    fun_1() { echo "one"; }
+    fun_2() { echo "two"; }
     preexec_functions+=(fun_1)
     preexec_functions+=(fun_2)
     __bp_interactive_mode
@@ -162,8 +162,8 @@ test_preexec_echo() {
     run '__bp_preexec_invoke_exec'
     [ $status -eq 0 ]
     [ "${#lines[@]}" == '2' ]
-    [ "${lines[0]}" == "fake command one" ]
-    [ "${lines[1]}" == "fake command two" ]
+    [ "${lines[0]}" == "one" ]
+    [ "${lines[1]}" == "two" ]
 }
 
 @test "preecmd should execute multiple functions in the order added to their arrays" {
@@ -229,66 +229,4 @@ test_preexec_echo() {
     run '__bp_in_prompt_command' " not_found"
     [ $status -eq 1 ]
 
-}
-
-@test "__bp_adjust_histcontrol should remove ignorespace and ignoreboth" {
-
-    # Should remove ignorespace
-    HISTCONTROL="ignorespace:ignoredups:*"
-    __bp_adjust_histcontrol
-    [ "$HISTCONTROL" == ":ignoredups:*" ]
-
-    # Should remove ignoreboth and replace it with ignoredups
-    HISTCONTROL="ignoreboth"
-    __bp_adjust_histcontrol
-    [ "$HISTCONTROL" == "ignoredups:" ]
-
-    # Handle a few inputs
-    HISTCONTROL="ignoreboth:ignorespace:some_thing_else"
-    __bp_adjust_histcontrol
-    echo "$HISTCONTROL"
-    [ "$HISTCONTROL" == "ignoredups:::some_thing_else" ]
-
-}
-
-@test "preexec should respect HISTTIMEFORMAT" {
-    preexec_functions+=(test_preexec_echo)
-    __bp_interactive_mode
-    git_command="git commit -a -m 'committing some stuff'"
-    HISTTIMEFORMAT='%F %T '
-    history -s $git_command
-
-    run '__bp_preexec_invoke_exec'
-    [ $status -eq 0 ]
-    [ "$output" == "$git_command" ]
-}
-
-@test "preexec should not strip whitespace from commands" {
-    preexec_functions+=(test_preexec_echo)
-    __bp_interactive_mode
-    history -s " this command has whitespace "
-
-    run '__bp_preexec_invoke_exec'
-    [ $status -eq 0 ]
-    [ "$output" == " this command has whitespace " ]
-}
-
-@test "preexec should preserve multi-line strings in commands" {
-    preexec_functions+=(test_preexec_echo)
-    __bp_interactive_mode
-    history -s "this 'command contains
-a multiline string'"
-    run '__bp_preexec_invoke_exec'
-    [ $status -eq 0 ]
-    [ "$output" == "this 'command contains
-a multiline string'" ]
-}
-
-@test "preexec should work on options to 'echo' commands" {
-    preexec_functions+=(test_preexec_echo)
-    __bp_interactive_mode
-    history -s -- '-n'
-    run '__bp_preexec_invoke_exec'
-    [ $status -eq 0 ]
-    [ "$output" == '-n' ]
 }
