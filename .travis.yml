@@ -1,20 +1,68 @@
 language: bash
 
-before_install:
-  # To install bats and test our shell/bash functions
-  - git clone -b "v1.1.0" "https://github.com/bats-core/bats-core.git"
-  - sudo ./bats-core/install.sh /usr/local
-  - rm -rf ./bats-core
-  - sudo apt-get install -qq zsh
+# The Docker service is supported on linux and not on osx. In the latter case,
+# Travis-CI just ignores this and prints a warning message on the console.
+services:
+  - docker
 
-# For bats functional tests
 env:
-  - functional_test="true"
+  global:
+    # This is the latest Bats commit tried. The last release (1.1.0 as of
+    # writing) was more than a year ago, and there have been a number of
+    # improvements (including parallel jobs) since. In the future, we might use
+    # a released version.
+    - BATS_COMMIT=e582ef5aa6303285000edb5ef8651e6235705382
+    # This is the directory name in the GitHub zip file.
+    - BATS_DIR="bats-core-${BATS_COMMIT}"
 
-# command to run tests
+matrix:
+  include:
+    # Use the default Bash version on osx
+    - os: osx
+    # Use the default Bash version on Ubuntu 18.04
+    - dist: bionic
+    # Use the specified Bash version in Docker on the default Ubuntu
+    - env: DOCKER_BASH_VER=3.2
+    - env: DOCKER_BASH_VER=4.0
+    - env: DOCKER_BASH_VER=4.1
+    - env: DOCKER_BASH_VER=4.2
+    - env: DOCKER_BASH_VER=4.3
+    - env: DOCKER_BASH_VER=4.4
+    - env: DOCKER_BASH_VER=5
+    - env: DOCKER_BASH_VER=devel
+
+install:
+  # Install Bats
+  - pushd "${HOME}"
+  - curl -sSL "https://github.com/bats-core/bats-core/archive/${BATS_COMMIT}.zip" -o "${BATS_DIR}.zip"
+  - unzip -qq "${BATS_DIR}.zip"
+  - pushd "${BATS_DIR}"
+  - BATS_ROOT="${PWD}"
+  # Define functions for running Bash and Bats via Docker or the shell
+  - |
+    if [[ -n "${DOCKER_BASH_VER:-}" ]]; then
+      # Build the Docker image
+      docker build --build-arg "bashver=${DOCKER_BASH_VER}" --tag bats .
+      # Define a common function for running Docker
+      function run_docker() {
+        docker run --interactive --tty --volume="${TRAVIS_BUILD_DIR}":/work --workdir=/work "$@"
+      }
+      # Define the functions using Docker
+      function run_bash() { run_docker --entrypoint=bash bats "$@"; }
+      function run_bats() { run_docker bats "$@"; }
+    else
+      # Define the functions using the shell
+      function run_bash() { /bin/bash "$@"; }
+      function run_bats() { "${BATS_ROOT}/bin/bats" "$@"; }
+    fi
+  - popd
+  - popd
+
+before_script:
+  # Print and confirm expected versions
+  - run_bash --version | if [[ "${DOCKER_BASH_VER:-}" =~ ^[[:digit:]]  ]]; then grep "${DOCKER_BASH_VER}"; else cat; fi
+  - run_bats --version | grep '1.2.0-dev'
+
 script:
-  - /usr/local/bin/bats test
-
-notifications:
-  email:
-    on_success: never
+  # Run tests
+  - run_bats test
