@@ -12,6 +12,7 @@ env:
     # improvements (including parallel jobs) since. In the future, we might use
     # a released version.
     - BATS_COMMIT=e582ef5aa6303285000edb5ef8651e6235705382
+    - BATS_ZIP_URL="https://github.com/bats-core/bats-core/archive/${BATS_COMMIT}.zip"
     # This is the directory name in the GitHub zip file.
     - BATS_DIR="bats-core-${BATS_COMMIT}"
 
@@ -46,7 +47,7 @@ install:
     fi
 
   # Install Bats
-  - curl -sSL "https://github.com/bats-core/bats-core/archive/${BATS_COMMIT}.zip" -o "${BATS_DIR}.zip"
+  - curl -sSL "${BATS_ZIP_URL}" -o "${BATS_DIR}.zip"
   - unzip -qq "${BATS_DIR}.zip"
   - cd "${BATS_DIR}"
   - BATS_ROOT="${PWD}"
