@@ -19,8 +19,12 @@ matrix:
   include:
     # Use the default Bash version on osx
     - os: osx
+
     # Use the default Bash version on Ubuntu 18.04
     - dist: bionic
+      # ShellCheck URLs: https://shellcheck.storage.googleapis.com/index.html
+      env: SHELLCHECK_URL=https://storage.googleapis.com/shellcheck/shellcheck-stable.linux.x86_64.tar.xz
+
     # Use the specified Bash version in Docker on the default Ubuntu
     - env: DOCKER_BASH_VER=3.2
     - env: DOCKER_BASH_VER=4.0
@@ -32,11 +36,19 @@ matrix:
     - env: DOCKER_BASH_VER=devel
 
 install:
+  - cd "${HOME}"
+
+  # Install the latest stable ShellCheck
+  - |
+    if [[ -n "${SHELLCHECK_URL:-}" ]]; then
+      wget -qO- "${SHELLCHECK_URL}" | tar -xJv
+      export SHELLCHECK="${PWD}/shellcheck-stable/shellcheck"
+    fi
+
   # Install Bats
-  - pushd "${HOME}"
   - curl -sSL "https://github.com/bats-core/bats-core/archive/${BATS_COMMIT}.zip" -o "${BATS_DIR}.zip"
   - unzip -qq "${BATS_DIR}.zip"
-  - pushd "${BATS_DIR}"
+  - cd "${BATS_DIR}"
   - BATS_ROOT="${PWD}"
   # Define functions for running Bash and Bats via Docker or the shell
   - |
@@ -55,8 +67,8 @@ install:
       function run_bash() { /bin/bash "$@"; }
       function run_bats() { "${BATS_ROOT}/bin/bats" "$@"; }
     fi
-  - popd
-  - popd
+
+  - cd "${TRAVIS_BUILD_DIR}"
 
 before_script:
   # Print and confirm expected versions
@@ -64,5 +76,7 @@ before_script:
   - run_bats --version | grep '1.2.0-dev'
 
 script:
+  # Run source checks
+  - if [[ -n "${SHELLCHECK:-}" ]]; then ./check; fi
   # Run tests
   - run_bats test
