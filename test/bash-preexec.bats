@@ -9,9 +9,11 @@ setup() {
   set -o nounset
 
   # Needed for testing
+  # shellcheck disable=SC2034
   __bp_delay_install="true"
 
   # Source the script
+  # shellcheck disable=SC1090
   source "${BATS_TEST_DIRNAME}/../bash-prompt-hooks.sh"
 }
 
@@ -70,7 +72,7 @@ test_preexec_arg() {
       echo "$?"
     }
     return_exit_code() {
-      return $1
+      return "$1"
     }
     # Helper function is necessary because Bats' run doesn't preserve $?
     set_exit_code_and_run_precmd() {
@@ -90,7 +92,7 @@ test_preexec_arg() {
   }
   # Helper function is necessary because Bats' run doesn't preserve $PIPESTATUS
   set_pipestatus_and_run_precmd() {
-    false | true
+    false | cat
     __bp_precmd_invoke_cmd
   }
 
@@ -141,6 +143,7 @@ test_preexec_arg() {
 
 @test "preexec should execute a function with IFS defined to local scope" {
     IFS=_
+    # shellcheck disable=SC2086 disable=SC2128
     preexec() { parts=(1_2); echo $parts; }
     __bp_interactive_mode
     run '__bp_preexec_invoke_exec'
@@ -150,6 +153,7 @@ test_preexec_arg() {
 
 @test "precmd should execute a function with IFS defined to local scope" {
     IFS=_
+    # shellcheck disable=SC2086 disable=SC2128
     precmd() { parts=(2_2); echo $parts; }
     run '__bp_precmd_invoke_cmd'
     [ $status -eq 0 ]

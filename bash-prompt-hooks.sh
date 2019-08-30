@@ -56,7 +56,7 @@ __bp_inside_preexec=0
 __bp_preexec_interactive_mode=""
 
 __bp_trim_whitespace() {
-    local var=$@
+    local var="$*"
     var="${var#"${var%%[![:space:]]*}"}"   # remove leading whitespace characters
     var="${var%"${var##*[![:space:]]}"}"   # remove trailing whitespace characters
     echo -n "$var"
@@ -75,6 +75,7 @@ __bp_interactive_mode() {
 __bp_precmd_invoke_cmd() {
     # Save the returned value from our last command, and from each process in
     # its pipeline. Note: this MUST be the first thing done in this function.
+    # shellcheck disable=SC2034
     __bp_last_ret_value="$?" BP_PIPESTATUS=("${PIPESTATUS[@]}")
 
     # Don't invoke precmds if we are inside an execution of an "original
@@ -96,7 +97,7 @@ __bp_precmd_invoke_cmd() {
 # precmd function. This is available for instance in zsh. We can simulate it in bash
 # by setting the value here.
 __bp_set_ret_value() {
-    return ${1:-}
+    return "${1:-}"
 }
 
 __bp_in_prompt_command() {
@@ -250,6 +251,6 @@ __bp_install_after_session_init() {
 }
 
 # Run our install so long as we're not delaying it.
-if [[ -z "$__bp_delay_install" ]]; then
+if [[ -z "${__bp_delay_install:-}" ]]; then
     __bp_install_after_session_init
 fi;

@@ -7,15 +7,18 @@ setup() {
 }
 
 @test "should not import if it's already defined" {
+  # shellcheck disable=SC2034
   __bp_imported="defined"
+  # shellcheck disable=SC1090
   source "${BATS_TEST_DIRNAME}/../bash-prompt-hooks.sh"
-  [ -z $(type -t __bp_preexec_and_precmd_install) ]
+  [ -z "$(type -t __bp_preexec_and_precmd_install)" ]
 }
 
 @test "should import if not defined" {
   unset __bp_imported
+  # shellcheck disable=SC1090
   source "${BATS_TEST_DIRNAME}/../bash-prompt-hooks.sh"
-  [ -n $(type -t __bp_install) ]
+  [ -n "$(type -t __bp_install)" ]
 }
 
 @test "warning for non-empty PROMPT_COMMAND" {
