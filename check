@@ -13,4 +13,4 @@ SHELLCHECK="${SHELLCHECK:-shellcheck}"
 [[ "${TRAVIS}" == 'true' ]] && "${SHELLCHECK}" --version
 
 # Run
-"${SHELLCHECK}" --shell=bash -- ./check ./fmt ./*.sh ./test/*.bats
+"${SHELLCHECK}" --shell=bash -- ./check ./fmt ./*.sh ./tests/*.bats

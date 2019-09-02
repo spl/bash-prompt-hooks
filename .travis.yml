@@ -92,4 +92,4 @@ script:
   # Run source formatting
   - if [[ -n "${SHFMT:-}" ]]; then ./fmt || true; fi
   # Run tests
-  - run_bats test
+  - run_bats tests
