@@ -117,3 +117,7 @@ after_success: |
     ./bin/cov
     bash <(curl -sS https://codecov.io/bash)
   fi
+
+notifications:
+  email:
+    on_failure: change
