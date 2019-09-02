@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+SCRIPT="${BATS_TEST_DIRNAME}/../prompt-hooks.bash"
+
 setup() {
   # Reset these for each test
   unset PROMPT_COMMAND
@@ -14,7 +16,7 @@ setup() {
 
   # Source the script
   # shellcheck disable=SC1090
-  source "${BATS_TEST_DIRNAME}/../bash-prompt-hooks.sh"
+  source "${SCRIPT}"
 }
 
 bp_install() {

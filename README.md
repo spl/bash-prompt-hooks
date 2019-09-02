@@ -12,14 +12,14 @@ bash-prompt-hooks
 First, get the script. For example:
 
 ```
-$ curl https://raw.githubusercontent.com/spl/bash-prompt-hooks/master/bash-prompt-hooks.sh -o $HOME/.bash-prompt-hooks.sh
+$ curl https://raw.githubusercontent.com/spl/bash-prompt-hooks/master/prompt-hooks.bash -o $HOME/.prompt-hooks.bash
 ```
 
 Then, source it in your Bash configuration (`$HOME/.bashrc`, `$HOME/.profile`,
 `$HOME/.bash_profile`, etc). For example:
 
 ```bash
-[[ -r $HOME/.bash-prompt-hooks.sh ]] && source $HOME/.bash-prompt-hooks.sh
+[[ -r $HOME/.prompt-hooks.bash ]] && source $HOME/.prompt-hooks.bash
 ```
 
 Finally, define the expected hook functions:
@@ -40,7 +40,7 @@ This should output something like:
 ```
 ~/bash-prompt-hooks $ ls
 <before command execution>
-LICENSE.md  README.md  bash-prompt-hooks.sh  test
+LICENSE.md  README.md  prompt-hooks.bash  test
 <before prompt>
 ~/bash-prompt-hooks $
 ```

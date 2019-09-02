@@ -18,6 +18,6 @@ mkdir -p "${COV_DIR}"
 
 # Run coverage check on tests
 "${KCOV}" \
-  --include-pattern=bash-prompt-hooks.sh \
+  --include-pattern=prompt-hooks.bash \
   "${COV_DIR}" \
   ./bin/test

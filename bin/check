@@ -13,4 +13,4 @@ SHELLCHECK="${SHELLCHECK:-shellcheck}"
 [[ "${TRAVIS}" == 'true' ]] && "${SHELLCHECK}" --version
 
 # Run on all Bash scripts
-"${SHELLCHECK}" --shell=bash -- ./bin/* ./*.sh ./tests/*.bats
+"${SHELLCHECK}" --shell=bash -- prompt-hooks.bash ./bin/* ./tests/*.bats
