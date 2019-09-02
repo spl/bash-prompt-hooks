@@ -99,7 +99,7 @@ script:
   # Run source check
   - if [[ -n "${SHELLCHECK:-}" ]]; then ./bin/check; fi
   # Run source formatting
-  - if [[ -n "${SHFMT:-}" ]]; then ./bin/fmt || true; fi
+  - if [[ -n "${SHFMT:-}" ]]; then ./bin/fmt; fi
   # Run tests
   - if [[ -n "${BATS:-}" ]]; then ./bin/test; fi
 
