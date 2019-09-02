@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Exit on first error
+set -e
+
+# Go to the top level directory of the repository
+cd "$(git rev-parse --show-toplevel)"
+
+# Use the environment variable if available
+KCOV="${KCOV:-kcov}"
+
+# Print the version only in CI
+[[ "${TRAVIS}" == 'true' ]] && "${KCOV}" --version
+
+# Create the directory for storing coverage data
+COV_DIR=./coverage
+mkdir -p "${COV_DIR}"
+
+# Run coverage check on tests
+"${KCOV}" \
+  --include-pattern=bash-prompt-hooks.sh \
+  "${COV_DIR}" \
+  ./bin/test

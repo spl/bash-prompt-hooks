@@ -23,10 +23,21 @@ matrix:
 
     # Use the default Bash version on Ubuntu 18.04
     - dist: bionic
+      addons:
+        apt:
+          packages:
+            # Dependencies for kcov
+            # See https://github.com/codecov/example-bash
+            - libcurl4-openssl-dev
+            - libelf-dev
+            - libdw-dev
+            - cmake
       # ShellCheck URLs: https://shellcheck.storage.googleapis.com/index.html
       # shfmt releases: https://github.com/mvdan/sh/releases
       env: SHELLCHECK_URL=https://storage.googleapis.com/shellcheck/shellcheck-stable.linux.x86_64.tar.xz \
-           SHFMT_URL=https://github.com/mvdan/sh/releases/download/v2.6.4/shfmt_v2.6.4_linux_amd64
+           SHFMT_URL=https://github.com/mvdan/sh/releases/download/v2.6.4/shfmt_v2.6.4_linux_amd64 \
+           KCOV_URL=https://github.com/SimonKagstrom/kcov/archive/master.tar.gz \
+           KCOV_DIR=kcov-master
 
     # Use the specified Bash version in Docker on the default Ubuntu
     - env: DOCKER_BASH_VER=3.2
@@ -44,7 +55,7 @@ install:
   # Install the latest stable ShellCheck
   - |
     if [[ -n "${SHELLCHECK_URL:-}" ]]; then
-      curl -sSL "${SHELLCHECK_URL}" | tar -xJv
+      curl -sSL "${SHELLCHECK_URL}" | tar -xJ
       export SHELLCHECK="${PWD}/shellcheck-stable/shellcheck"
     fi
 
@@ -91,3 +102,18 @@ script:
   - if [[ -n "${SHFMT:-}" ]]; then ./bin/fmt || true; fi
   # Run tests
   - if [[ -n "${BATS:-}" ]]; then ./bin/test; fi
+
+after_success: |
+  if [[ -n "${KCOV_URL:-}" && -n "${KCOV_DIR:-}" ]]; then
+    cd "${HOME}"
+    curl -sSL "${KCOV_URL}" | tar zx
+    cd "${KCOV_DIR}"
+    mkdir build
+    cd build
+    cmake ..
+    make
+    sudo make install
+    cd "${TRAVIS_BUILD_DIR}"
+    ./bin/cov
+    bash <(curl -sS https://codecov.io/bash)
+  fi
