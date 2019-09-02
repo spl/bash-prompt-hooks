@@ -61,30 +61,28 @@ install:
   - unzip -qq "${BATS_DIR}.zip"
   - cd "${BATS_DIR}"
   - BATS_ROOT="${PWD}"
-  # Define functions for running Bash and Bats via Docker or the shell
+  # Prepare for running Bats via Docker or the shell
   - |
     if [[ -n "${DOCKER_BASH_VER:-}" ]]; then
       # Build the Docker image
       docker build --build-arg "bashver=${DOCKER_BASH_VER}" --tag bats .
-      # Define a common function for running Docker
+      # Define a function for running Docker
       function run_docker() {
         docker run --interactive --tty --volume="${TRAVIS_BUILD_DIR}":/work --workdir=/work "$@"
       }
-      # Define the functions using Docker
-      function run_bash() { run_docker --entrypoint=bash bats "$@"; }
+      # Print and confirm the expected Bash version used by Bats
+      run_docker --entrypoint=bash bats --version | \
+        if [[ "${DOCKER_BASH_VER}" =~ ^[[:digit:]] ]]; then grep "${DOCKER_BASH_VER}"; else cat; fi
+      # Define a function that can be used in the environment variable
       function run_bats() { run_docker bats "$@"; }
+      export -f run_docker run_bats
+      export BATS=run_bats
     else
-      # Define the functions using the shell
-      function run_bash() { /bin/bash "$@"; }
-      function run_bats() { "${BATS_ROOT}/bin/bats" "$@"; }
+      # Define the environment variable to run Bats in the shell
+      export BATS="${BATS_ROOT}/bin/bats"
     fi
 
   - cd "${TRAVIS_BUILD_DIR}"
-
-before_script:
-  # Print and confirm expected versions
-  - run_bash --version | if [[ "${DOCKER_BASH_VER:-}" =~ ^[[:digit:]]  ]]; then grep "${DOCKER_BASH_VER}"; else cat; fi
-  - run_bats --version | grep '1.2.0-dev'
 
 script:
   # Run source check
@@ -92,4 +90,4 @@ script:
   # Run source formatting
   - if [[ -n "${SHFMT:-}" ]]; then ./bin/fmt || true; fi
   # Run tests
-  - run_bats tests
+  - if [[ -n "${BATS:-}" ]]; then ./bin/test; fi

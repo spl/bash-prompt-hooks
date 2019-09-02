@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Exit on first error
+set -e
+
+# Go to the top level directory of the repository
+cd "$(git rev-parse --show-toplevel)"
+
+# Use the environment variable if available
+BATS="${BATS:-bats}"
+
+# Print the version only in CI
+[[ "${TRAVIS}" == 'true' ]] && "${BATS}" --version
+
+# Run all tests
+"${BATS}" tests
