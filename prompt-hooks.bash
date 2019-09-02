@@ -1,4 +1,4 @@
-# bash-prompt-hooks.sh -- `preexec` and `precmd` hooks for the Bash prompt
+# prompt-hooks.bash -- `preexec` and `precmd` hooks for the Bash prompt
 # https://github.com/spl/bash-prompt-hooks
 #
 #

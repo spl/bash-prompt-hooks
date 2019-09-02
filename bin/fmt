@@ -25,4 +25,4 @@ if [[ -z "${TRAVIS:-}" ]]; then
 fi
 
 # Run on all Bash scripts (except for Bats, which shfmt fails on)
-"${SHFMT}" "${SHFMT_OPTS[@]}" -- ./bin/* ./*.sh
+"${SHFMT}" "${SHFMT_OPTS[@]}" -- prompt-hooks.bash ./bin/*
