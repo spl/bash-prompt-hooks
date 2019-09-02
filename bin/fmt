@@ -1,10 +1,7 @@
 #!/bin/bash
 
-# Exit on first error
-set -e
-
 # Go to the top level directory of the repository
-cd "$(git rev-parse --show-toplevel)"
+cd "$(git rev-parse --show-toplevel)" || exit
 
 # Use the environment variable if available
 SHFMT="${SHFMT:-shfmt}"
@@ -14,15 +11,29 @@ SHFMT="${SHFMT:-shfmt}"
 
 # Initial flags:
 # - parse bash
-# - show diff
 # - indent by 2 spaces
 # - indent switch cases
-SHFMT_OPTS=(-ln bash -d -i 2 -ci)
+SHFMT_OPTS=(-ln bash -i 2 -ci)
 
 # If not in CI, update the changed files directly.
 if [[ -z "${TRAVIS:-}" ]]; then
   SHFMT_OPTS+=(-w)
 fi
 
-# Run on all Bash scripts (except for Bats, which shfmt fails on)
-"${SHFMT}" "${SHFMT_OPTS[@]}" -- prompt-hooks.bash ./bin/*
+# Rewrite the Bats scripts in-place to look more like Bash scripts to shfmt
+perl -pi -e 's/^(\@test.*) \{$/$1\n{/' -- ./tests/*.bats
+
+# Run on all Bash and Bats scripts
+"${SHFMT}" "${SHFMT_OPTS[@]}" -- prompt-hooks.bash ./bin/* ./tests/*.bats
+STATUS=$?
+
+# Undo the changes to the Bats scripts in-place so that they work with Bats
+perl -pi -e 's/^\{\R//; s/(\@test.*$)/$1 {/' -- ./tests/*.bats
+
+# Show the diff, if any, and ignore whitespace-only changes.
+#
+# This is better than using the shfmt -d flag because it includes paging and
+# color. However, this does include changes other than those made by shfmt.
+git diff -w
+
+exit $STATUS
