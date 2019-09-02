@@ -24,6 +24,5 @@ if [[ -z "${TRAVIS:-}" ]]; then
   SHFMT_OPTS+=(-w)
 fi
 
-# Run on all Bash scripts.
-# Note: shfmt fails on Bats scripts, so we don't include them here.
-"${SHFMT}" "${SHFMT_OPTS[@]}" -- ./check ./fmt ./*.sh
+# Run on all Bash scripts (except for Bats, which shfmt fails on)
+"${SHFMT}" "${SHFMT_OPTS[@]}" -- ./bin/* ./*.sh

@@ -12,5 +12,5 @@ SHELLCHECK="${SHELLCHECK:-shellcheck}"
 # Print the version only in CI
 [[ "${TRAVIS}" == 'true' ]] && "${SHELLCHECK}" --version
 
-# Run
-"${SHELLCHECK}" --shell=bash -- ./check ./fmt ./*.sh ./tests/*.bats
+# Run on all Bash scripts
+"${SHELLCHECK}" --shell=bash -- ./bin/* ./*.sh ./tests/*.bats

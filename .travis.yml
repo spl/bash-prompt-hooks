@@ -88,8 +88,8 @@ before_script:
 
 script:
   # Run source check
-  - if [[ -n "${SHELLCHECK:-}" ]]; then ./check; fi
+  - if [[ -n "${SHELLCHECK:-}" ]]; then ./bin/check; fi
   # Run source formatting
-  - if [[ -n "${SHFMT:-}" ]]; then ./fmt || true; fi
+  - if [[ -n "${SHFMT:-}" ]]; then ./bin/fmt || true; fi
   # Run tests
   - run_bats tests
