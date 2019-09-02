@@ -9,8 +9,8 @@ cd "$(git rev-parse --show-toplevel)"
 # Use the environment variable if available
 SHELLCHECK="${SHELLCHECK:-shellcheck}"
 
-# Print shellcheck version information only in CI
+# Print the version only in CI
 [[ "${TRAVIS}" == 'true' ]] && "${SHELLCHECK}" --version
 
-# Lint with shellcheck
-"${SHELLCHECK}" --shell=bash -- "$0" ./*.sh ./test/*.bats
+# Run
+"${SHELLCHECK}" --shell=bash -- ./check ./fmt ./*.sh ./test/*.bats

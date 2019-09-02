@@ -24,7 +24,9 @@ matrix:
     # Use the default Bash version on Ubuntu 18.04
     - dist: bionic
       # ShellCheck URLs: https://shellcheck.storage.googleapis.com/index.html
-      env: SHELLCHECK_URL=https://storage.googleapis.com/shellcheck/shellcheck-stable.linux.x86_64.tar.xz
+      # shfmt releases: https://github.com/mvdan/sh/releases
+      env: SHELLCHECK_URL=https://storage.googleapis.com/shellcheck/shellcheck-stable.linux.x86_64.tar.xz \
+           SHFMT_URL=https://github.com/mvdan/sh/releases/download/v2.6.4/shfmt_v2.6.4_linux_amd64
 
     # Use the specified Bash version in Docker on the default Ubuntu
     - env: DOCKER_BASH_VER=3.2
@@ -42,8 +44,16 @@ install:
   # Install the latest stable ShellCheck
   - |
     if [[ -n "${SHELLCHECK_URL:-}" ]]; then
-      wget -qO- "${SHELLCHECK_URL}" | tar -xJv
+      curl -sSL "${SHELLCHECK_URL}" | tar -xJv
       export SHELLCHECK="${PWD}/shellcheck-stable/shellcheck"
+    fi
+
+  # Install the latest released shfmt
+  - |
+    if [[ -n "${SHFMT_URL:-}" ]]; then
+      curl -sSL "${SHFMT_URL}" -o shfmt
+      chmod u+x shfmt
+      export SHFMT="${PWD}/shfmt"
     fi
 
   # Install Bats
@@ -77,7 +87,9 @@ before_script:
   - run_bats --version | grep '1.2.0-dev'
 
 script:
-  # Run source checks
+  # Run source check
   - if [[ -n "${SHELLCHECK:-}" ]]; then ./check; fi
+  # Run source formatting
+  - if [[ -n "${SHFMT:-}" ]]; then ./fmt || true; fi
   # Run tests
   - run_bats test

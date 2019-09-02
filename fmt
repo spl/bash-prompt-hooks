@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Exit on first error
+set -e
+
+# Go to the top level directory of the repository
+cd "$(git rev-parse --show-toplevel)"
+
+# Use the environment variable if available
+SHFMT="${SHFMT:-shfmt}"
+
+# Print the version only in CI
+[[ "${TRAVIS}" == 'true' ]] && echo "shfmt $("${SHFMT}" -version)"
+
+# Initial flags:
+# - parse bash
+# - show diff
+# - indent by 2 spaces
+# - indent switch cases
+SHFMT_OPTS=(-ln bash -d -i 2 -ci)
+
+# If not in CI, update the changed files directly.
+if [[ -z "${TRAVIS:-}" ]]; then
+  SHFMT_OPTS+=(-w)
+fi
+
+# Run on all Bash scripts.
+# Note: shfmt fails on Bats scripts, so we don't include them here.
+"${SHFMT}" "${SHFMT_OPTS[@]}" -- ./check ./fmt ./*.sh
