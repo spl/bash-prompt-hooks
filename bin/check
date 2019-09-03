@@ -1,5 +1,7 @@
 #!/bin/bash
 
+[[ "${TRAVIS}" == 'true' ]] && echo -e "travis_fold:start:$0\033[33;1m$0\033[0m"
+
 # Exit on first error
 set -e
 
@@ -14,3 +16,5 @@ SHELLCHECK="${SHELLCHECK:-shellcheck}"
 
 # Run on all Bash scripts
 "${SHELLCHECK}" --shell=bash -- prompt-hooks.bash ./bin/* ./tests/*.bats
+
+[[ "${TRAVIS}" == 'true' ]] && echo "travis_fold:end:$0"
