@@ -41,12 +41,7 @@ __bp_imported="defined"
 # $PIPESTATUS is available only in a copy, $BP_PIPESTATUS.
 # TODO: Figure out how to restore PIPESTATUS before each precmd or preexec
 # function.
-__bp_last_ret_value="$?"
 BP_PIPESTATUS=("${PIPESTATUS[@]}")
-__bp_last_argument_prev_command="$_"
-
-__bp_inside_precmd=0
-__bp_inside_preexec=0
 
 # This variable describes whether we are currently in "interactive mode";
 # i.e. whether this shell has just executed a prompt and is waiting for user
@@ -80,14 +75,14 @@ __bp_precmd_invoke_cmd() {
   # Don't invoke precmds if we are inside an execution of an "original
   # prompt command" by another precmd execution loop. This avoids infinite
   # recursion.
-  if ((__bp_inside_precmd > 0)); then
+  if ((${__bp_inside_precmd:-0} > 0)); then
     return
   fi
   local __bp_inside_precmd=1
 
   # Only execute the function if it exists.
   if type -t precmd 1>/dev/null; then
-    __bp_set_ret_value "$__bp_last_ret_value" "$__bp_last_argument_prev_command"
+    __bp_set_ret_value "$__bp_last_ret_value" "${__bp_last_argument_prev_command:-}"
     precmd
   fi
 }
@@ -129,7 +124,7 @@ __bp_preexec_invoke_exec() {
   # https://stackoverflow.com/questions/40944532/bash-preserve-in-a-debug-trap#40944702
   __bp_last_argument_prev_command="${1:-}"
   # Don't invoke preexecs if we are inside of another preexec.
-  if ((__bp_inside_preexec > 0)); then
+  if ((${__bp_inside_preexec:-0} > 0)); then
     return
   fi
   local __bp_inside_preexec=1
@@ -176,7 +171,7 @@ __bp_preexec_invoke_exec() {
 
   # Only execute the function if it exists.
   if type -t preexec 1>/dev/null; then
-    __bp_set_ret_value ${__bp_last_ret_value:-}
+    __bp_set_ret_value "${__bp_last_ret_value:-0}"
     preexec
     preexec_ret_value="$?"
   fi
@@ -187,7 +182,7 @@ __bp_preexec_invoke_exec() {
   # If `extdebug` is enabled a non-zero return value from any preexec function
   # will cause the user's command not to execute.
   # Run `shopt -s extdebug` to enable
-  __bp_set_ret_value "$preexec_ret_value" "$__bp_last_argument_prev_command"
+  __bp_set_ret_value "$preexec_ret_value" "${__bp_last_argument_prev_command:-}"
 }
 
 __bp_install() {

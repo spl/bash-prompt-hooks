@@ -15,6 +15,13 @@ SHELLCHECK="${SHELLCHECK:-shellcheck}"
 [[ "${TRAVIS}" == 'true' ]] && "${SHELLCHECK}" --version
 
 # Run on all Bash scripts
-"${SHELLCHECK}" --shell=bash -- prompt-hooks.bash ./bin/* ./tests/*.bats
+#
+# Ignore reports about expressions in single quotes. We intentionally put them
+# there to avoid expansions.
+# Reference: https://github.com/koalaman/shellcheck/wiki/SC2016
+"${SHELLCHECK}" --shell=bash --exclude=SC2016 -- \
+  prompt-hooks.bash \
+  ./bin/* \
+  ./tests/*.bats
 
 [[ "${TRAVIS}" == 'true' ]] && echo "travis_fold:end:$0"
