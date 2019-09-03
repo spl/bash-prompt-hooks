@@ -24,10 +24,6 @@ bp_install() {
   eval "$PROMPT_COMMAND"
 }
 
-test_preexec_arg() {
-  [ -z "$1" ]
-}
-
 @test "__bp_install should exit if it's already installed" {
   bp_install
   run '__bp_install'
@@ -54,19 +50,72 @@ test_preexec_arg() {
   eval "$PROMPT_COMMAND"
 }
 
-@test "No functions defined for preexec should simply return" {
+@test 'success if preexec unset' {
   __bp_interactive_mode
-
-  run '__bp_preexec_invoke_exec' 'true'
+  run '__bp_preexec_invoke_exec'
   [ $status -eq 0 ]
   [ -z "$output" ]
 }
 
-@test "precmd should execute a function once" {
-  precmd() { echo "test echo"; }
+@test 'preexec should run only once' {
+  preexec() { echo 'preexec output'; }
+  __bp_interactive_mode
+  run '__bp_preexec_invoke_exec'
+  [ $status -eq 0 ]
+  [ "$output" == 'preexec output' ]
+}
+
+@test 'success if precmd unset' {
   run '__bp_precmd_invoke_cmd'
   [ $status -eq 0 ]
-  [ "$output" == "test echo" ]
+  [ -z "$output" ]
+}
+
+@test 'precmd should run only once' {
+  precmd() { echo 'precmd output'; }
+  run '__bp_precmd_invoke_cmd'
+  [ $status -eq 0 ]
+  [ "$output" == 'precmd output' ]
+}
+
+@test 'preexec should not loop' {
+  preexec() {
+    __bp_preexec_invoke_exec
+    echo 'no preexec recursion'
+  }
+  __bp_interactive_mode
+  run '__bp_preexec_invoke_exec'
+  [ $status -eq 0 ]
+  [ "$output" == 'no preexec recursion' ]
+}
+
+@test 'precmd should not loop' {
+  precmd() {
+    __bp_precmd_invoke_cmd
+    echo 'no precmd recursion'
+  }
+  run '__bp_precmd_invoke_cmd'
+  [ $status -eq 0 ]
+  [ "$output" == 'no precmd recursion' ]
+}
+
+@test 'invoking precmd should not fail if preexec unset last arg' {
+  preexec() { unset __bp_last_argument_prev_command; }
+  __bp_interactive_mode
+  __bp_preexec_invoke_exec 'last arg'
+  run '__bp_precmd_invoke_cmd'
+  [ $status -eq 0 ]
+  [ "$output" == '' ]
+}
+
+@test 'invoking preexec should not fail if precmd unset ret val' {
+  preexec() { echo 'preexec output'; }
+  precmd() { unset __bp_last_ret_value; }
+  __bp_precmd_invoke_cmd
+  __bp_interactive_mode
+  run '__bp_preexec_invoke_exec' 'last arg'
+  [ $status -eq 0 ]
+  [ "$output" == 'preexec output' ]
 }
 
 @test "precmd should set \$? to be the previous exit code" {
@@ -103,16 +152,13 @@ test_preexec_arg() {
   [ "$output" == "1 0" ]
 }
 
-@test "precmd should set \$_ to be the previous last arg" {
+@test 'precmd should have $_ set to the last arg' {
   precmd() { echo "$_"; }
-  bats_trap=$(trap -p DEBUG)
-  trap DEBUG # remove the Bats stack-trace trap so $_ doesn't get overwritten
-  : "last-arg"
-  __bp_preexec_invoke_exec "$_"
-  eval "$bats_trap" # Restore trap
+  __bp_interactive_mode
+  __bp_preexec_invoke_exec 'last arg'
   run '__bp_precmd_invoke_cmd'
   [ $status -eq 0 ]
-  [ "$output" == "last-arg" ]
+  [ "$output" == 'last arg' ]
 }
 
 @test "precmd preserves \$_" {
