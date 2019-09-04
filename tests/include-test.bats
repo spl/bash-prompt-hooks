@@ -8,6 +8,14 @@ setup() {
   trap DEBUG
 }
 
+@test "error when not run in Bash" {
+  unset BASH_VERSION
+  run source "${SCRIPT}"
+  echo "\$status='$status' \$output='$output'" > /dev/tty
+  [ $status == 1 ]
+  [ "$output" == 'prompt-hooks.bash: Error! This script only works in Bash.' ]
+}
+
 @test "should not import if it's already defined" {
   # shellcheck disable=SC2034
   __bp_imported="defined"
