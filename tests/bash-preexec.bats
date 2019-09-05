@@ -78,6 +78,16 @@ bp_install() {
   [ "$output" == 'precmd output' ]
 }
 
+@test 'preexec does nothing if stdout is redirected' {
+  preexec() { echo 'preexec output'; }
+  __bp_interactive_mode
+  # Disable this to allow [[ ! -t 1 ]] to succeed.
+  unset __bp_delay_install
+  run '__bp_preexec_invoke_exec'
+  [ $status -eq 0 ]
+  [ -z "$output" ]
+}
+
 @test 'preexec should not loop' {
   preexec() {
     __bp_preexec_invoke_exec
