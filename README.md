@@ -1,3 +1,6 @@
+[![travis-ci](https://travis-ci.com/spl/bash-prompt-hooks.svg?branch=master)](https://travis-ci.com/spl/bash-prompt-hooks)
+[![codecov](https://codecov.io/gh/spl/bash-prompt-hooks/branch/master/graph/badge.svg)](https://codecov.io/gh/spl/bash-prompt-hooks)
+
 bash-prompt-hooks
 =================
 
