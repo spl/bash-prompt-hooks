@@ -1,18 +1,16 @@
 #!/bin/bash
 
-[[ "${TRAVIS}" == 'true' ]] && echo -e "travis_fold:start:$0\033[33;1m$0\033[0m"
+source ./lib/cd-top-level.bash
 
-# Exit on first error
-set -e
-
-# Go to the top level directory of the repository
-cd "$(git rev-parse --show-toplevel)"
+source ./lib/fold-start.bash
 
 # Use the environment variable if available
 SHELLCHECK="${SHELLCHECK:-shellcheck}"
 
 # Print the version only in CI
-[[ "${TRAVIS}" == 'true' ]] && "${SHELLCHECK}" --version
+if [[ -n "${TRAVIS:-}" ]]; then
+  "${SHELLCHECK}" --version
+fi
 
 # Run on all Bash scripts
 #
@@ -22,6 +20,10 @@ SHELLCHECK="${SHELLCHECK:-shellcheck}"
 "${SHELLCHECK}" --shell=bash --exclude=SC2016 -- \
   prompt-hooks.bash \
   ./bin/* \
+  ./lib/*.bash \
   ./tests/*.bats
+STATUS=$?
 
-[[ "${TRAVIS}" == 'true' ]] && echo "travis_fold:end:$0"
+source ./lib/fold-end.bash
+
+exit $STATUS

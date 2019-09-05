@@ -1,15 +1,16 @@
 #!/bin/bash
 
-[[ "${TRAVIS}" == 'true' ]] && echo -e "travis_fold:start:$0\033[33;1m$0\033[0m"
+source ./lib/cd-top-level.bash
 
-# Go to the top level directory of the repository
-cd "$(git rev-parse --show-toplevel)" || exit
+source ./lib/fold-start.bash
 
 # Use the environment variable if available
 SHFMT="${SHFMT:-shfmt}"
 
 # Print the version only in CI
-[[ "${TRAVIS}" == 'true' ]] && echo "shfmt $("${SHFMT}" -version)"
+if [[ -n "${TRAVIS:-}" ]]; then
+  echo "shfmt $("${SHFMT}" -version)"
+fi
 
 # Initial flags:
 # - parse bash
@@ -26,7 +27,11 @@ fi
 perl -pi -e 's/^(\@test.*) \{$/$1\n{/' -- ./tests/*.bats
 
 # Run on all Bash and Bats scripts
-"${SHFMT}" "${SHFMT_OPTS[@]}" -- prompt-hooks.bash ./bin/* ./tests/*.bats
+"${SHFMT}" "${SHFMT_OPTS[@]}" -- \
+  prompt-hooks.bash \
+  ./bin/* \
+  ./lib/*.bash \
+  ./tests/*.bats
 STATUS=$?
 
 # Undo the changes to the Bats scripts in-place so that they work with Bats
@@ -38,6 +43,6 @@ perl -pi -e 's/^\{\R//; s/(\@test.*$)/$1 {/' -- ./tests/*.bats
 # color. However, this does include changes other than those made by shfmt.
 git diff -w
 
-[[ "${TRAVIS}" == 'true' ]] && echo "travis_fold:end:$0"
+source ./lib/fold-end.bash
 
 exit $STATUS
