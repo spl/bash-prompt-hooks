@@ -88,6 +88,15 @@ bp_install() {
   [ -z "$output" ]
 }
 
+@test 'preexec does nothing during completion' {
+  preexec() { echo 'preexec output'; }
+  __bp_interactive_mode
+  COMP_LINE='abc'
+  run '__bp_preexec_invoke_exec'
+  [ $status -eq 0 ]
+  [ -z "$output" ]
+}
+
 @test 'preexec should not loop' {
   preexec() {
     __bp_preexec_invoke_exec
