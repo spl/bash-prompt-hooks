@@ -30,6 +30,16 @@
 #  either of these after bash-prompt-hooks has been installed it will most
 #  likely break.
 
+__bp_err() {
+  echo "prompt-hooks.bash: $1" >&2
+}
+
+# Make sure only Bash is sourcing this.
+if [[ -z "${BASH_VERSION:-}" ]]; then
+  __bp_err 'Error! This script only works in Bash.'
+  return 1
+fi
+
 # Avoid duplicate inclusion
 if [[ "${__bp_imported:-}" == "defined" ]]; then
   return 0
@@ -209,28 +219,23 @@ __bp_install() {
 # the function.
 __bp_install_after_session_init() {
 
-  # Make sure this is bash that's running this and return otherwise.
-  if [[ -z "${BASH_VERSION:-}" ]]; then
-    return 1
-  fi
-
   # Exit with error if PROMPT_COMMAND is read-only.
   # Reference: https://stackoverflow.com/a/4441178
   if ! (unset PROMPT_COMMAND 2>/dev/null); then
-    echo "bash-prompt-hooks: Error! PROMPT_COMMAND is read-only." >&2
+    __bp_err 'Error! PROMPT_COMMAND is read-only.'
     return 1
   fi
 
   # Warn if PROMPT_COMMAND is not empty.
   if [[ -n "${PROMPT_COMMAND:-}" ]]; then
-    echo "bash-prompt-hooks: Warning! Overriding PROMPT_COMMAND." >&2
+    __bp_err 'Warning! Overriding PROMPT_COMMAND.'
   fi
 
   unset PROMPT_COMMAND
 
   # Warn if a DEBUG trap already exists.
   if [[ -n "$(trap -p DEBUG)" ]]; then
-    echo "bash-prompt-hooks: Warning! Overriding DEBUG trap." >&2
+    __bp_err 'Warning! Overriding DEBUG trap.'
   fi
 
   # Note that we cannot always replace the DEBUG trap in a sourced script:
