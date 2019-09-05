@@ -11,7 +11,6 @@ setup() {
 @test "error when not run in Bash" {
   unset BASH_VERSION
   run source "${SCRIPT}"
-  echo "\$status='$status' \$output='$output'" > /dev/tty
   [ $status == 1 ]
   [ "$output" == 'prompt-hooks.bash: Error! This script only works in Bash.' ]
 }
