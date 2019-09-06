@@ -46,13 +46,6 @@ if [[ "${__bp_imported:-}" == "defined" ]]; then
 fi
 __bp_imported="defined"
 
-# Should be available to each precmd and preexec
-# function, should they want it. $? and $_ are available as $? and $_, but
-# $PIPESTATUS is available only in a copy, $BP_PIPESTATUS.
-# TODO: Figure out how to restore PIPESTATUS before each precmd or preexec
-# function.
-BP_PIPESTATUS=("${PIPESTATUS[@]}")
-
 # This variable describes whether we are currently in "interactive mode";
 # i.e. whether this shell has just executed a prompt and is waiting for user
 # input.  It documents whether the current command invoked by the trace hook is
