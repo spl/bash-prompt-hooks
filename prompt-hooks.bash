@@ -47,13 +47,6 @@ if [[ "${__bp_imported:-}" == "defined" ]]; then
 fi
 __bp_imported="defined"
 
-# This variable describes whether we are currently in "interactive mode";
-# i.e. whether this shell has just executed a prompt and is waiting for user
-# input.  It documents whether the current command invoked by the trace hook is
-# run interactively by the user; it's set immediately after the prompt hook,
-# and unset as soon as the trace hook is run.
-__bp_preexec_interactive_mode=""
-
 __bp_trim_whitespace() {
   local var="$*"
   var="${var#"${var%%[![:space:]]*}"}" # remove leading whitespace characters
@@ -65,6 +58,11 @@ __bp_trim_whitespace() {
 # It sets a variable to indicate that the prompt was just displayed,
 # to allow the DEBUG trap to know that the next command is likely interactive.
 __bp_interactive_mode() {
+  # This variable describes whether we are currently in "interactive mode"; i.e.
+  # whether this shell has just executed a prompt and is waiting for user input.
+  # It documents whether the current command invoked by the trace hook is run
+  # interactively by the user; it's set immediately after the prompt hook, and
+  # unset as soon as the trace hook is run.
   __bp_preexec_interactive_mode="on"
 }
 
