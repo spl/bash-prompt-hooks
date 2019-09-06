@@ -19,9 +19,19 @@ setup() {
   source "${SCRIPT}"
 }
 
+no_stdout() {
+  eval "$@" >/dev/null
+}
+
 bp_install() {
   __bp_install_after_session_init
   eval "$PROMPT_COMMAND"
+}
+
+@test "__bp_err should write to stderr" {
+  run no_stdout __bp_err "'error message'"
+  [ $status -eq 0 ]
+  [ "$output" == 'prompt-hooks.bash: error message' ]
 }
 
 @test "__bp_install should exit if it's already installed" {

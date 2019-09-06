@@ -30,6 +30,7 @@
 #  either of these after bash-prompt-hooks has been installed it will most
 #  likely break.
 
+# General-purpose function used in this file to print messages to stderr.
 __bp_err() {
   echo "prompt-hooks.bash: $1" >&2
 }
